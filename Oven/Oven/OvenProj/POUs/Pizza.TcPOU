@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="Pizza" Id="{2f80c2d8-2e09-43ca-bf13-fda285a0af48}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Pizza
+VAR
+	Exists :BOOL;
+	IsBacked:BOOL;
+	BakingTime:Time;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

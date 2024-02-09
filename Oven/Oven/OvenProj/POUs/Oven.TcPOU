@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="Oven" Id="{2b1325a4-44da-429e-9d4e-5b86706c2d6c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Oven
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	Power :BOOL;
+	PizzaReady:BOOL;
+	PizzaOndeck:BOOL;
+	PizzaInOven :BOOL;
+	PizzaDone:BOOL;
+	PizzaIsBaked:BOOL;
+	Burned:BOOL; 
+	Alarm:BOOL;
+	OvenTimer:TON;
+	MoveTimer:TON;
+	AlarmTimer:TON;
+	OverBackedTimer:TON;
+	OverCocked:TON;
+	OffTimer:TON;
+	Blink:INT:=0;
+	AlarmCounter: int:=0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="BakeThePizza" Id="{fbbe17c0-63ec-4cef-a94f-04a608c17cf7}">
+      <Declaration><![CDATA[METHOD BakeThePizza : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF PizzaInOven AND Power THEN
+	OvenTimer(IN:=TRUE,PT:=T#5S);
+	IF OvenTimer.Q THEN
+		OverCocked(IN:=TRUE,PT:=T#5S);
+		PizzaIsBaked:=TRUE;
+		BakeThePizza:=TRUE;	
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="BlinkAlarm" Id="{8ea46015-50be-4879-b96c-8d2dfa13354d}">
+      <Declaration><![CDATA[METHOD BlinkAlarm : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE Blink OF
+	0:
+	IF  AlarmCounter<4 THEN
+		Alarm:=TRUE;
+		AlarmCounter:=AlarmCounter+1;
+		Blink:=Blink+1;
+	ELSE
+		Power:=FALSE;	
+	END_IF
+
+	1:
+		AlarmTimer(IN:=TRUE,PT:=T#500MS);
+		IF AlarmTimer.Q THEN
+			AlarmTimer(IN:=FALSE);
+			Blink:=Blink+1;
+		END_IF
+	
+	2:
+		Alarm:=FALSE;
+		Blink:=Blink+1;
+		
+	3:
+		OffTimer(IN:=TRUE,PT:=T#200MS);
+		IF OffTimer.Q THEN
+			OffTimer(IN:=FALSE);
+			Blink:=0;
+			AlarmCounter:=AlarmCounter+1;
+		END_IF
+		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Init" Id="{2ca6c2f0-8a15-4415-b77e-7f5b217b36dd}">
+      <Declaration><![CDATA[METHOD Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	OvenTimer(IN:=FALSE);
+	OverBackedTimer(IN:=FALSE);
+	PizzaInOven:=FALSE;
+	Burned:=FALSE;
+	PizzaIsBaked:=FALSE;
+	Init:=TRUE;
+	Alarm:=FALSE;
+	AlarmCounter:=0;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MovePizzaOutTheOven" Id="{e427f4bd-6382-472e-a722-eb7f0071ae79}">
+      <Declaration><![CDATA[METHOD MovePizzaOutTheOven : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	et:Time;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF PizzaInOven AND PizzaIsBaked AND NOT PizzaDone AND NOT Burned THEN 
+	MoveTimer(in:=TRUE,PT:=T#500MS);
+	et:=MoveTimer.ET;
+	IF MoveTimer.Q THEN
+		PizzaInOven:=FALSE;
+		PizzaIsBaked:=FALSE;
+		PizzaDone:=TRUE;
+		OvenTimer(IN:=FALSE);
+		MovePizzaOutTheOven:=TRUE;
+//		IF Burned THEN
+//			DoneBurned:=TRUE;
+//		END_IF
+		MoveTimer(IN:=FALSE);
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MovePizzaToDeck" Id="{5cea3209-fae2-4718-968e-8e0a2d3cb268}">
+      <Declaration><![CDATA[METHOD MovePizzaToDeck : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF PizzaReady AND NOT PizzaOndeck THEN
+MoveTimer(IN:=TRUE,PT:=T#500MS);
+	IF MoveTimer.Q THEN
+		PizzaReady:=FALSE;
+		PizzaOndeck:=TRUE;
+		MoveTimer(IN:=FALSE);
+		MovePizzaToDeck:=TRUE;
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MovePizzaToOven" Id="{12ff3ce0-7baf-4f3b-b752-a8100e403840}">
+      <Declaration><![CDATA[METHOD MovePizzaToOven : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF PizzaOndeck AND NOT PizzaInOven THEN
+MoveTimer(IN:=TRUE,PT:=T#500MS);
+	IF MoveTimer.Q THEN
+		PizzaOndeck:=FALSE;
+		PizzaInOven:=TRUE;
+		MoveTimer(IN:=FALSE);
+		MovePizzaToOven:=TRUE;
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OverBaked" Id="{66d11476-737c-4d78-a370-29d3151b1dbb}">
+      <Declaration><![CDATA[METHOD OverBaked : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF PizzaDone AND PizzaInOven THEN
+	OverBackedTimer(IN:=TRUE,PT:=T#3S);
+	IF OverBackedTimer.Q THEN
+		Burned:=TRUE;
+		PizzaIsBaked:=FALSE;
+		OverBackedTimer(IN:=FALSE);
+		alarm:=TRUE;
+		OverBaked:=TRUE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

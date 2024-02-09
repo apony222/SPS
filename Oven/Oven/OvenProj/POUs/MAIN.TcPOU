@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="MAIN" Id="{b9c19335-74b2-4f47-87fc-e726a85a4d51}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	MyOven:oven;
+	Step_Stat:INT:=0;
+	MyPizza:Pizza;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//IF MyOven.Power THEN
+//	CASE Step_Stat OF
+//		0:
+//		//MyOven.BlinkAlarm();
+//		MyOven.MovePizzaToDeck();
+//		IF MyOven.MovePizzaToOven() THEN
+//			Step_Stat:=Step_Stat+1;
+//		END_IF
+//		1: 
+//		MyOven.MovePizzaToDeck();
+//		IF MyOven.BakeThePizza() THEN
+//			Step_Stat:=Step_Stat+1;
+//		END_IF
+//		2:
+//		MyOven.MovePizzaToDeck();
+//		IF MyOven.MovePizzaOutTheOven() THEN
+//			Step_Stat:=0;
+//		ELSE
+//			MyOven.OverBaked(); 
+////				IF MyOven.Burned THEN
+////					MyOven.BlinkAlarm();
+////				END_IF	
+//		END_IF
+//		99:
+//		IF MyOven.Init() THEN
+//			Step_Stat:=0;
+//		END_IF
+//	END_CASE
+//END_IF
+
+if MyOven.Power then
+	CASE Step_Stat OF
+		0:
+			MyOven.Init();
+			Step_Stat:=Step_Stat+1;
+		1:
+			MyOven.MovePizzaToDeck();
+			Step_Stat:=Step_Stat+1;
+		2:
+			MyOven.MovePizzaToOven();
+			Step_Stat:=Step_Stat+1;
+		3:
+			 IF MyOven.BakeThePizza() THEN
+				 MyOven.OverBaked();
+				Step_Stat:=Step_Stat+1; 
+				ELSE
+					Step_Stat:=Step_Stat+1; 
+			 END_IF
+			
+		4:
+			IF MyOven.Alarm THEN
+				MyOven.BlinkAlarm();
+			END_IF
+			MyOven.MovePizzaOutTheOven();
+			Step_Stat:=1;
+	
+	END_CASE
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
