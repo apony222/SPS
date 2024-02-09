@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Axxe" Id="{137564b9-828a-441c-a29e-142496d0fc9d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Axxe
+VAR_INPUT
+	i_i_AxxePosition	:	INT;
+	i_i_AxxeMinPos		:	INT;
+	i_i_AxxeMaxPos		:	INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_SetAxxeValues" Id="{307f6f91-7248-4993-a985-c29dd5090276}">
+      <Declaration><![CDATA[METHOD M_SetAxxeValues : BOOL
+VAR_INPUT
+	AxxeMinPos		:	INT;
+	AxxeMaxPos		:	INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[i_i_AxxeMinPos:=AxxeMinPos;
+i_i_AxxeMaxPos:=AxxeMaxPos;
+IF i_i_AxxeMinPos = AxxeMinPos AND i_i_AxxeMaxPos = AxxeMaxPos THEN
+	M_SetAxxeValues:=TRUE;	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="Mashine" Id="{91a4eecc-16d9-4c41-a3c9-0baf19c0cac9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Mashine
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	DelayTimer:TON;
+	MyRobot:FB_Robot;
+	l_Schraubendreher1:FB_Schraubendreher;
+	l_Schraubendreher2:FB_Schraubendreher;
+	l_i_Step_Stat:INT;
+	l_i_Model1:INT:=0;
+	l_i_Model2:INT:=0;
+	l_i_Model3:INT:=0;
+	l_i_Move_Step_Stat:INT;
+	Holder:ARRAY[1..11] OF FB_Holder;
+	Nagel:ARRAY[1..11] OF FB_Nagel;
+	RoboCurrent:UINT:=1;
+	Dre1Current:UINT:=1;
+	Dre2Current:UINT:=1;
+	DoneCurrent:uINT:=1;
+	Sensore1:Sensore;
+	Sensore2:Sensore;
+	Sensore3:Sensore;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MyRobot.i_HOZAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=50);
+MyRobot.i_GRFLeftAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=2);
+MyRobot.i_GRFRightAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=-2);
+l_Schraubendreher1.i_VTKAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=40);
+l_Schraubendreher2.i_VTKAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=40);
+
+//Move To Loading Position and Load Nail
+IF NOT holder[RoboCurrent].Loaded AND RoboCurrent <= 11 THEN
+	CASE l_i_Model1 OF
+		0: 
+			IF MoveToLoad(holder[RoboCurrent]) THEN
+				l_i_Model1:=l_i_Model1+1;
+			END_IF
+		1:
+			IF MyRobot.M_Load(holder[RoboCurrent])AND RoboCurrent < 11 THEN
+				Nagel[RoboCurrent].visible:=TRUE;
+				l_i_Model1:=l_i_Model1+1;
+				RoboCurrent:=RoboCurrent+1;
+			END_IF
+		2:
+			l_i_Model1:=0;
+	END_CASE
+END_IF
+//if Loaded Move to Schraubendreher 1 and FestSchrauben
+IF Holder[Dre1Current].Loaded THEN
+	CASE l_i_Model2  OF
+	0: 
+	IF MoveToDreherOne(holder[Dre1Current]) THEN
+		l_i_Model2:=l_i_Model2+1;	
+	END_IF
+	1:
+	IF l_Schraubendreher1.M_Festschrauben(holder[Dre1Current]) AND Dre1Current < 11 THEN
+		l_i_Model2:=l_i_Model2+1;
+		Holder[Dre1Current].Loaded:=FALSE;
+		Dre1Current:=Dre1Current+1;
+	END_IF
+	2:
+	l_i_Model2:=0;
+END_CASE
+END_IF
+
+//if it is Festgeschraubt then ab Schrauben
+IF Holder[Dre2Current].Eingeschraubt THEN 
+	CASE l_i_Model3 OF
+	0: 
+	IF MoveToDreherTwo(holder[Dre2Current]) THEN
+		l_Schraubendreher2.Done:=FALSE;
+		l_i_Model3:=l_i_Model3+1;
+		
+	END_IF
+	1:
+	IF l_Schraubendreher2.M_Abschrauben(holder[Dre2Current]) AND Dre2Current < 11 THEN
+		l_i_Model3:=l_i_Model3+1;
+		Dre2Current:=Dre2Current+1;
+	END_IF
+	2:
+	l_i_Model3:=0;
+END_CASE
+END_IF
+
+
+IF holder[DoneCurrent].Abgeschraubt THEN
+	IF M_MoveOut(holder[DoneCurrent])  AND DoneCurrent < 11 THEN
+		DoneCurrent:=DoneCurrent+1;
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="Delay" Id="{1f07cd79-5ee7-46f8-8b9e-658de1e67491}">
+      <Declaration><![CDATA[METHOD Delay : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[DelayTimer(IN:=TRUE,PT:=T#500MS);
+IF DelayTimer.Q THEN
+	DelayTimer(IN:=FALSE);
+	Delay:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_MoveOut" Id="{0655265d-9bd5-4d4d-a6e9-f924a19d4665}">
+      <Declaration><![CDATA[METHOD M_MoveOut : BOOL
+VAR_INPUT
+	MyHolder : REFERENCE TO FB_Holder;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MyHolder.i_i_HolderPosition < 600 THEN
+	MyHolder.MoveForward();
+	MyHolder.Loaded:=FALSE;
+	MyHolder.Eingeschraubt:=FALSE;
+	Sensore3Active();
+ELSE
+	
+	M_MoveOut:=TRUE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveToDreherOne" Id="{46b09b37-4e96-4fc9-a9a6-671abbf19bc0}">
+      <Declaration><![CDATA[METHOD MoveToDreherOne : BOOL
+VAR_INPUT
+	MyHolder: REFERENCE TO  FB_Holder;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT Sensore2Active() THEN
+    MyHolder.MoveForward();
+	 Sensore1Active();
+ELSE
+	MoveToDreherOne:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveToDreherTwo" Id="{f244f682-e0ae-4a71-970c-92b888351f8d}">
+      <Declaration><![CDATA[METHOD MoveToDreherTwo : BOOL
+VAR_INPUT
+	MyHolder: REFERENCE TO  FB_Holder;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT Sensore3Active() THEN
+    MyHolder.MoveForward();
+	 Sensore2Active();
+ELSE
+	MoveToDreherTwo:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveToLoad" Id="{f19f16df-e5b7-49f0-a7fa-de2b11430078}">
+      <Declaration><![CDATA[METHOD MoveToLoad : BOOL
+VAR_INPUT
+	MyHolder: REFERENCE TO  FB_Holder;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT Sensore1Active() THEN
+      MyHolder.MoveForward();
+ELSE
+	MoveToLoad:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Sensore1Active" Id="{66cd90ef-85f6-4cf8-b296-f1d7f516b296}">
+      <Declaration><![CDATA[METHOD Sensore1Active : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Holder[RoboCurrent].i_i_HolderPosition = 85 THEN
+	Sensore1.i_b_SensoreActive:=TRUE;
+	Sensore1Active:=TRUE;
+ELSE
+	IF Holder[RoboCurrent].i_i_HolderPosition < 85 OR Holder[RoboCurrent].i_i_HolderPosition > 83 THEN
+		Sensore1.i_b_SensoreActive:=FALSE;
+		Sensore1Active:=FALSE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Sensore2Active" Id="{546a4662-7505-4cf0-82ea-d2d5c7641528}">
+      <Declaration><![CDATA[METHOD Sensore2Active : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Holder[Dre1Current].i_i_HolderPosition = 263 THEN
+	Sensore2.i_b_SensoreActive:=TRUE;
+	Sensore2Active:=TRUE;
+ELSE
+	IF Holder[Dre1Current].i_i_HolderPosition < 263 OR Holder[Dre1Current].i_i_HolderPosition > 263 THEN
+		Sensore2.i_b_SensoreActive:=FALSE;
+		Sensore2Active:=FALSE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Sensore3Active" Id="{a503a7f5-fd93-4ec7-82d0-68954ec2e452}">
+      <Declaration><![CDATA[METHOD Sensore3Active : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Holder[Dre2Current].i_i_HolderPosition = 404 THEN
+	Sensore3.i_b_SensoreActive:=TRUE;
+	Sensore3Active:=TRUE;
+ELSE
+	IF Holder[Dre2Current].i_i_HolderPosition < 404 OR Holder[Dre2Current].i_i_HolderPosition > 404 THEN
+		Sensore3.i_b_SensoreActive:=FALSE;
+		Sensore3Active:=FALSE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

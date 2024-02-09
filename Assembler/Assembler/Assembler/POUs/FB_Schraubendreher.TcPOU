@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Schraubendreher" Id="{93730e35-c1f6-433d-a3e0-3bd31cbc4495}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Schraubendreher
+VAR_INPUT
+	Done:BOOL:=TRUE;
+END_VAR
+VAR
+	i_VTKAxxe:FB_Axxe;
+	l_b_Power:BOOL;
+	l_i_Step_Stat:INT;
+	DelayTimer:TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Abschrauben" Id="{4703fc11-1a4b-4157-8af2-6f1f0ca359bc}">
+      <Declaration><![CDATA[METHOD M_Abschrauben : BOOL
+VAR_INPUT
+	MyHolder:REFERENCE TO FB_Holder;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE l_i_Step_Stat OF
+	0: 
+		IF M_Turn() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;	
+		END_IF
+	1:		
+		IF M_SchraubendreherDown() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	2:
+		IF M_SchraubendreherUp() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	3: 
+		IF M_Turn() THEN
+			l_i_Step_Stat:=0;
+			done:=TRUE;
+			MyHolder.Eingeschraubt:=FALSE;
+			MyHolder.Abgeschraubt:=TRUE;
+			M_Abschrauben:=true;	
+		END_IF
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Delay" Id="{5c5d0b3d-16e1-4152-8132-26404eb0b1f9}">
+      <Declaration><![CDATA[METHOD M_Delay : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[DelayTimer(IN:=TRUE,PT:=T#500ms);
+IF DelayTimer.Q THEN
+	DelayTimer(IN:=FALSE);
+	M_Delay:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Festschrauben" Id="{62d8adda-2ec2-48d1-bcad-8fcf2e122a30}">
+      <Declaration><![CDATA[METHOD M_Festschrauben : BOOL
+VAR_INPUT
+	MyHolder:REFERENCE TO FB_Holder;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE l_i_Step_Stat OF
+	0: 
+		IF M_Turn() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	1:		
+		IF M_SchraubendreherDown() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	2:
+		IF M_SchraubendreherUp() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	3: 
+		IF M_Turn() THEN
+			l_i_Step_Stat:=0;
+			done:=TRUE;
+			MyHolder.Eingeschraubt:=TRUE;
+			M_Festschrauben:=TRUE;	
+		END_IF
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_SchraubendreherDown" Id="{80d67bff-8de8-494b-9fb9-d622f317d3ed}">
+      <Declaration><![CDATA[METHOD M_SchraubendreherDown : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_VTKAxxe.i_i_AxxePosition < i_VTKAxxe.i_i_AxxeMaxPos THEN
+i_VTKAxxe.i_i_AxxePosition := i_VTKAxxe.i_i_AxxePosition+1;
+	IF i_VTKAxxe.i_i_AxxePosition = i_VTKAxxe.i_i_AxxeMaxPos THEN
+		IF M_Delay()THEN
+			M_SchraubendreherDown:=TRUE;
+		END_IF	
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_SchraubendreherDown:=TRUE;	
+	END_IF	
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_SchraubendreherUp" Id="{850a426d-7daa-4126-afed-8565d1b14839}">
+      <Declaration><![CDATA[METHOD M_SchraubendreherUp : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_VTKAxxe.i_i_AxxePosition > i_VTKAxxe.i_i_AxxeMinPos THEN
+i_VTKAxxe.i_i_AxxePosition := i_VTKAxxe.i_i_AxxePosition-1;
+	IF i_VTKAxxe.i_i_AxxePosition = i_VTKAxxe.i_i_AxxeMinPos THEN
+		IF M_Delay()THEN
+			M_SchraubendreherUp:=TRUE;	
+		END_IF	
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_SchraubendreherUp:=TRUE;	
+	END_IF	
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Turn" Id="{bf44598f-cb79-475e-b0c9-5fb400131e57}">
+      <Declaration><![CDATA[METHOD M_Turn : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[l_b_Power:=NOT l_b_Power;
+M_Turn:=TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

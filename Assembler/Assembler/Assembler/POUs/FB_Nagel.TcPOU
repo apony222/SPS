@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Nagel" Id="{bf58f65c-449f-41ac-9910-73b494142a45}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Nagel
+VAR_INPUT
+	visible:BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

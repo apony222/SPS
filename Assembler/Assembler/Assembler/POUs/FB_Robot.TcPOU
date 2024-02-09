@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Robot" Id="{135fb873-5778-4a3f-8cf7-dd3fe9558ed9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Robot
+VAR_INPUT
+	LoadDone:BOOL:=TRUE;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	i_VTKAxxe:FB_Axxe;
+	i_HOZAxxe:FB_Axxe;
+	i_GRFLeftAxxe:FB_Axxe;
+	i_GRFRightAxxe:FB_Axxe;
+	l_i_Step_Stat:INT:=0;
+	DelayTimer:TON;
+	RoboNagel: FB_Nagel;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="M_Delay" Id="{7ae25f55-d9fd-4b68-8016-0eff7e89ce92}">
+      <Declaration><![CDATA[METHOD M_Delay : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[DelayTimer(IN:=TRUE,PT:=T#500ms);
+IF DelayTimer.Q THEN
+	DelayTimer(IN:=FALSE);
+	M_Delay:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Load" Id="{bf43d4e2-78f3-4a44-99e9-b45f24b8fe2f}">
+      <Declaration><![CDATA[METHOD M_Load : BOOL
+VAR_INPUT
+	Myholder : REFERENCE TO FB_Holder; 
+END_VAR
+VAR
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE l_i_Step_Stat OF
+	0:
+		IF M_RobotHOZLeft() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	1:
+		
+		IF i_VTKAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=25) THEN
+			IF M_RobotVTKDown() THEN
+				l_i_Step_Stat:=l_i_Step_Stat+1;
+			END_IF
+		END_IF
+	2:
+		LoadDone:=FALSE;
+		IF M_RobotGRFZu() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+			RoboNagel.visible:=true;
+		END_IF
+	3:
+		IF M_RobotVTKUp() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	4:
+		IF M_RobotHOZRight() THEN
+				l_i_Step_Stat:=l_i_Step_Stat+1;	
+		END_IF
+	5:
+		IF i_VTKAxxe.M_SetAxxeValues(AxxeMinPos:=0,AxxeMaxPos:=50) THEN
+			IF M_RobotVTKDown() THEN
+				l_i_Step_Stat:=l_i_Step_Stat+1;
+				Myholder.Nagel.visible:=TRUE;
+				RoboNagel.visible:=FALSE;
+			END_IF
+		END_IF
+	6:
+		IF M_RobotGRFAuf() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	7:	
+		IF M_RobotVTKUp() THEN
+			l_i_Step_Stat:=l_i_Step_Stat+1;
+		END_IF
+	8:	
+		Myholder.Loaded:=true;
+		LoadDone:=TRUE;
+		M_Load:=TRUE;
+		l_i_Step_Stat:=0;	
+END_CASE
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RobotGRFAuf" Id="{cb9b1c14-6b50-4aa4-bf54-b5e72c4a2b9d}">
+      <Declaration><![CDATA[METHOD M_RobotGRFAuf : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_GRFLeftAxxe.i_i_AxxePosition > i_GRFLeftAxxe.i_i_AxxeMinPos AND i_GRFRightAxxe.i_i_AxxePosition < i_GRFRightAxxe.i_i_AxxeMinPos THEN
+	i_GRFLeftAxxe.i_i_AxxePosition := i_GRFLeftAxxe.i_i_AxxePosition-1;
+	i_GRFRightAxxe.i_i_AxxePosition := i_GRFRightAxxe.i_i_AxxePosition+1;
+	IF i_GRFLeftAxxe.i_i_AxxePosition = i_GRFLeftAxxe.i_i_AxxeMinPos AND i_GRFRightAxxe.i_i_AxxePosition = i_GRFRightAxxe.i_i_AxxeMinPos THEN
+		IF M_Delay()THEN
+			M_RobotGRFAuf:=TRUE;	
+		END_IF
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_RobotGRFAuf:=TRUE;	
+	END_IF		
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RobotGRFZu" Id="{130aee20-b261-4ab3-8e9b-f0e393c77a55}">
+      <Declaration><![CDATA[METHOD M_RobotGRFZu : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_GRFLeftAxxe.i_i_AxxePosition < i_GRFLeftAxxe.i_i_AxxeMaxPos AND i_GRFRightAxxe.i_i_AxxePosition > i_GRFRightAxxe.i_i_AxxeMaxPos THEN
+	i_GRFLeftAxxe.i_i_AxxePosition := i_GRFLeftAxxe.i_i_AxxePosition+1;
+	i_GRFRightAxxe.i_i_AxxePosition := i_GRFRightAxxe.i_i_AxxePosition-1;
+	IF i_GRFLeftAxxe.i_i_AxxePosition = i_GRFLeftAxxe.i_i_AxxeMaxPos AND i_GRFRightAxxe.i_i_AxxePosition = i_GRFRightAxxe.i_i_AxxeMaxPos THEN
+		IF M_Delay()THEN
+			M_RobotGRFZu:=TRUE;	
+		END_IF
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_RobotGRFZu:=TRUE;	
+	END_IF		
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RobotHOZLeft" Id="{4462816c-b937-4ed6-a68b-c159d1907a0a}">
+      <Declaration><![CDATA[METHOD M_RobotHOZLeft : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_HOZAxxe.i_i_AxxePosition > i_VTKAxxe.i_i_AxxeMinPos THEN
+i_HOZAxxe.i_i_AxxePosition := i_HOZAxxe.i_i_AxxePosition-1;
+	IF i_HOZAxxe.i_i_AxxePosition = i_HOZAxxe.i_i_AxxeMinPos THEN
+		IF M_Delay()THEN
+			M_RobotHOZLeft:=TRUE;
+		END_IF	
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_RobotHOZLeft:=TRUE;	
+	END_IF	
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RobotHOZRight" Id="{c31f0cee-2f26-475a-b458-66745f7e4b2a}">
+      <Declaration><![CDATA[METHOD M_RobotHOZRight : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_HOZAxxe.i_i_AxxePosition < i_VTKAxxe.i_i_AxxeMaxPos THEN
+i_HOZAxxe.i_i_AxxePosition := i_HOZAxxe.i_i_AxxePosition+1;
+	IF i_HOZAxxe.i_i_AxxePosition = i_HOZAxxe.i_i_AxxeMaxPos THEN
+		IF M_Delay()THEN
+			M_RobotHOZRight:=TRUE;
+		END_IF	
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_RobotHOZRight:=TRUE;	
+	END_IF	
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RobotVTKDown" Id="{a2bef6db-9ade-401a-a612-463cc5f2c4b5}">
+      <Declaration><![CDATA[METHOD M_RobotVTKDown : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_VTKAxxe.i_i_AxxePosition < i_VTKAxxe.i_i_AxxeMaxPos THEN
+i_VTKAxxe.i_i_AxxePosition := i_VTKAxxe.i_i_AxxePosition+1;
+	IF i_VTKAxxe.i_i_AxxePosition = i_VTKAxxe.i_i_AxxeMaxPos THEN
+		IF M_Delay()THEN
+			M_RobotVTKDown:=TRUE;
+		END_IF	
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_RobotVTKDown:=TRUE;	
+	END_IF	
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RobotVTKUp" Id="{7dc26cda-cd47-4964-8ce6-df001fd28337}">
+      <Declaration><![CDATA[METHOD M_RobotVTKUp : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF i_VTKAxxe.i_i_AxxePosition > i_VTKAxxe.i_i_AxxeMinPos THEN
+i_VTKAxxe.i_i_AxxePosition := i_VTKAxxe.i_i_AxxePosition-1;
+	IF i_VTKAxxe.i_i_AxxePosition = i_VTKAxxe.i_i_AxxeMinPos THEN
+		IF M_Delay()THEN
+			M_RobotVTKUp:=TRUE;	
+		END_IF	
+	END_IF
+ELSE
+	IF M_Delay()THEN
+		M_RobotVTKUp:=TRUE;	
+	END_IF	
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

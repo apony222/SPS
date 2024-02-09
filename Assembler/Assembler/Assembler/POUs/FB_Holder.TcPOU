@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Holder" Id="{bdc5e698-34c8-4813-aa4a-5c82638240b4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Holder
+VAR_INPUT
+	i_i_HolderPosition:	INT;
+	Loaded:BOOL;
+	Eingeschraubt	:	BOOL;
+	Abgeschraubt: BOOL;
+	Nagel: FB_Nagel;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="MoveForward" Id="{778157c4-842c-4e24-ba3a-db3c00aa90f1}">
+      <Declaration><![CDATA[METHOD MoveForward : BOOL
+VAR_INPUT
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[i_i_HolderPosition:=i_i_HolderPosition+1;]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>
