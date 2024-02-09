@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Gate" Id="{5dd372f6-e7bc-4901-9720-6b285220b02e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Gate
+VAR_INPUT
+	GateStat:BOOL;
+	GatePosition:INT;
+	GateTimer:TON;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

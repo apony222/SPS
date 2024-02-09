@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="Mashine" Id="{89eb68b8-c5b6-42fc-976f-916d01938783}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Mashine 
+VAR_INPUT
+	Box:REFERENCE TO ARRAY[1..4] OF FB_Box;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	Current:INT:=1;
+	MyGate:FB_Gate;
+	FirstAxes:FB_Axes;
+	SecondAxes:FB_Axes;
+	Step_Stat:INT;
+	Step_Stat2:INT;
+	Step_Stat3:INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE Step_Stat OF
+	
+	0:
+		IF OpenGate() THEN
+			Step_Stat:=Step_Stat+1;
+		END_IF
+	1:
+		IF MoveOut(Box[Current]) THEN
+			Step_Stat:=Step_Stat+1;
+		END_IF
+	2:
+		IF CloseGate()  THEN
+			Step_Stat:=Step_Stat+1;
+		END_IF
+	3:
+		IF MoveToFirstPosition(Box[Current])  THEN
+			Step_Stat:=Step_Stat+1;
+		END_IF
+	4:
+		IF NOT Box[Current].IsMetal THEN
+			IF ExtendFirstAxes(Box[Current]) THEN
+				IF Current <4 THEN
+					Current:=Current+1;
+					Step_Stat:=0;
+				ELSE
+					Step_Stat:=7;
+				END_IF
+			END_IF
+		ELSE
+			Step_Stat:=Step_Stat+1;
+		END_IF
+	5:
+		IF MoveToSecondPosition(Box[Current]) THEN
+			Step_Stat:=Step_Stat+1;
+		END_IF
+	6:
+		IF Box[Current].IsMetal THEN
+			IF ExtendSecondAxes(Box[Current]) THEN
+				IF Current <4 THEN
+					Current:=Current+1;
+					Step_Stat:=0;
+				ELSE
+					Step_Stat:=7;
+				END_IF
+			END_IF
+		END_IF
+	7://End
+		
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="CloseGate" Id="{aa6cedba-aca2-436e-883f-a3a0add5d5f5}">
+      <Declaration><![CDATA[METHOD CloseGate : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MyGate.GateStat = TRUE THEN
+MyGate.GateTimer(IN:=TRUE,PT:=T#1S);	
+	IF MyGate.GatePosition > 0 THEN
+		MyGate.GatePosition:=MyGate.GatePosition-1;
+	END_IF
+	IF MyGate.GateTimer.Q THEN		
+		MyGate.GateTimer(IN:=FALSE);	
+		MyGate.GateStat:=FALSE;
+		CloseGate:=TRUE;	
+	END_IF	
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExtendFirstAxes" Id="{55a52d63-8d47-45d9-9aeb-77ad8f2741b0}">
+      <Declaration><![CDATA[METHOD ExtendFirstAxes : BOOL
+VAR_INPUT
+	Box:reference to FB_Box;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE FirstAxes.Axes_Step OF
+	0:
+		IF  FirstAxes.AxesPosition > -55 THEN
+			FirstAxes.AxesPosition:= FirstAxes.AxesPosition-1;
+			Box.PositionVTK:=Box.PositionVTK-4;
+			IF  FirstAxes.AxesPosition <= -55 AND Box.PositionVTK <= -200 THEN
+				FirstAxes.Axes_Step:=FirstAxes.Axes_Step+1;
+			END_IF
+		END_IF		
+	1: 
+		IF  FirstAxes.AxesPosition < 0 THEN	
+			FirstAxes.AxesPosition:= FirstAxes.AxesPosition+1;
+			IF  FirstAxes.AxesPosition = 0 THEN
+				ExtendFirstAxes:=TRUE;
+				FirstAxes.Axes_Step:=0;
+			END_IF		
+		END_IF
+END_CASE	
+
+
+
+
+
+
+
+//IF FirstAxes.Extended = FALSE THEN
+//	IF  FirstAxes.AxesPosition > -55 THEN
+//		 FirstAxes.AxesPosition:= FirstAxes.AxesPosition-1;
+//	END_IF	
+	
+//	IF  FirstAxes.AxesPosition = -55 THEN
+		
+//			FirstAxes.Extended:=TRUE;
+//		 	FirstAxes.AxesTimer(IN:=TRUE,PT:=T#500MS);
+//		IF FirstAxes.AxesTimer.Q AND  FirstAxes.Extended:=TRUE THEN
+			
+//			IF  FirstAxes.AxesPosition < 0 THEN
+//				 FirstAxes.AxesPosition:= FirstAxes.AxesPosition+1;
+//			END_IF
+	
+//			IF  FirstAxes.AxesPosition = 0 THEN
+//				FirstAxes.AxesTimer(IN:=FALSE);
+//				FirstAxes.Extended:=FALSE;
+//			END_IF
+			
+//		END_IF
+		
+//	END_IF
+	
+//END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExtendSecondAxes" Id="{376476d3-172d-4e71-911f-20fb82f8c92b}">
+      <Declaration><![CDATA[METHOD ExtendSecondAxes : BOOL
+VAR_INPUT
+	Box:REFERENCE TO FB_Box;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE SecondAxes.Axes_Step OF
+	0: 
+		IF  SecondAxes.AxesPosition > -55 THEN
+			SecondAxes.AxesPosition:= SecondAxes.AxesPosition-1;
+			Box.PositionVTK:=Box.PositionVTK-4;
+			IF  SecondAxes.AxesPosition <= -55 AND Box.PositionVTK <= -200 THEN
+				SecondAxes.Axes_Step:=SecondAxes.Axes_Step+1;
+			END_IF
+		END_IF		
+	1: 
+		IF  SecondAxes.AxesPosition < 0 THEN	
+			SecondAxes.AxesPosition:= SecondAxes.AxesPosition+1;
+			IF  SecondAxes.AxesPosition = 0 THEN
+				ExtendSecondAxes:=TRUE;
+				SecondAxes.Axes_Step:=0;
+			END_IF		
+		END_IF
+END_CASE	
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveOut" Id="{659aed3c-f2a6-48f0-a58e-780f600deaec}">
+      <Declaration><![CDATA[METHOD MoveOut : BOOL
+VAR_INPUT
+	Box: reference to FB_Box;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Box.PositionHOZ < 50 THEN
+Box.PositionHOZ:=Box.PositionHOZ+1;	
+	IF Box.PositionHOZ = 50 THEN
+		MoveOut:=TRUE;		
+	END_IF
+ELSIF Box.PositionHOZ = 50 THEN
+	MoveOut:=TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveToFirstPosition" Id="{6f9fc0d0-2d0b-462e-a132-c4a587c71b1b}">
+      <Declaration><![CDATA[METHOD MoveToFirstPosition : BOOL
+VAR_INPUT
+	Box:reference to FB_Box;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Box.PositionHOZ < 483 THEN
+Box.PositionHOZ:=Box.PositionHOZ+1;	
+	IF Box.PositionHOZ=483 THEN
+		MoveToFirstPosition:=TRUE;			
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveToSecondPosition" Id="{9433b3df-1da1-4078-bdd7-325bac920929}">
+      <Declaration><![CDATA[METHOD MoveToSecondPosition : BOOL
+VAR_INPUT
+	Box:reference to FB_Box;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Box.PositionHOZ < 685 THEN
+Box.PositionHOZ:=Box.PositionHOZ+1;	
+	IF Box.PositionHOZ=685 THEN
+		MoveToSecondPosition:=TRUE;			
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OpenGate" Id="{834ea33d-98f2-4216-a2b6-e4f2e4f8fbab}">
+      <Declaration><![CDATA[METHOD OpenGate : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i:INT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF MyGate.GateStat = FALSE THEN
+	MyGate.GateTimer(IN:=TRUE,PT:=T#1S);	
+	IF MyGate.GatePosition < 50 THEN
+		MyGate.GatePosition:=MyGate.GatePosition+1;
+	END_IF
+	IF MyGate.GateTimer.Q AND MyGate.GatePosition >=50 THEN		
+			MyGate.GateTimer(IN:=FALSE);	
+			MyGate.GateStat:=TRUE;
+			OpenGate:=TRUE;	
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

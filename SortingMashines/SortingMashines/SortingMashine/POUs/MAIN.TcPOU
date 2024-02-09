@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="MAIN" Id="{6bd49887-23f2-4dc8-9a30-9d7a5caa9f8d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	Mashine1Boxes:ARRAY[1..4] OF FB_Box;
+	Mashine2Boxes:ARRAY[1..4] OF FB_Box;
+	MyMashine1:Mashine;
+	MyMashine2:Mashine;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Mashine1Boxes[1](material:=Material_Type.Plastic);
+Mashine1Boxes[2](material:=Material_Type.Metal);
+Mashine1Boxes[3](material:=Material_Type.Plastic);
+Mashine1Boxes[4](material:=Material_Type.Metal);
+Mashine2Boxes[1](material:=Material_Type.Metal);
+Mashine2Boxes[2](material:=Material_Type.Plastic);
+Mashine2Boxes[3](material:=Material_Type.Metal);
+Mashine2Boxes[4](material:=Material_Type.Plastic);
+
+MyMashine1(Box:=Mashine1Boxes);
+MyMashine2(Box:=Mashine2Boxes);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

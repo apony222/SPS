@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Axes" Id="{9a888a9c-6387-480b-81ff-ad6e9015ae81}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Axes
+VAR_INPUT
+	AxesPosition:INT;
+	Extended:BOOL;
+	Axes_Step:Int:=0;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

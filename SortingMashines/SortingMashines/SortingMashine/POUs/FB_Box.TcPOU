@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_Box" Id="{a32f55f2-b0c1-4db5-947a-2f7d1d5dbe08}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Box
+VAR_INPUT
+		material : Material_Type;
+		PositionHOZ : INT;
+		PositionVTK : INT;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	IsMetal:BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[M_Identify_Material();]]></ST>
+    </Implementation>
+    <Method Name="M_Identify_Material" Id="{09b33bed-5d97-475a-8a54-80bdfe7240ff}">
+      <Declaration><![CDATA[METHOD M_Identify_Material : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF material=Material_Type.Metal THEN
+	IsMetal:=TRUE;
+ELSE
+	IsMetal:=FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>
